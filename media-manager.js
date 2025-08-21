@@ -15,11 +15,17 @@ class MediaManager {
 
     // 预加载媒体文件
     async preloadMedia() {
+        // 首先加载用户上传的文件
+        this.loadUserUploadedMedia();
+        
+        // 然后尝试加载服务器上的文件
         const totalSlides = 32;
         const loadPromises = [];
 
         for (let i = 1; i <= totalSlides; i++) {
-            loadPromises.push(this.loadMediaForSlide(i));
+            if (!this.mediaCache.has(i)) { // 只加载未被用户文件覆盖的幻灯片
+                loadPromises.push(this.loadMediaForSlide(i));
+            }
         }
 
         try {
@@ -254,6 +260,78 @@ class MediaManager {
             
             console.log(`Removed media for slide ${slideNumber}`);
         }
+    }
+
+    // 加载用户上传的媒体文件
+    loadUserUploadedMedia() {
+        try {
+            const savedData = localStorage.getItem('slideshowMediaFiles');
+            if (savedData) {
+                const mediaData = JSON.parse(savedData);
+                console.log('Loading user uploaded media files...');
+                
+                Object.keys(mediaData).forEach(slideNumber => {
+                    const data = mediaData[slideNumber];
+                    
+                    // 注意：localStorage中的URL可能已失效
+                    // 在实际应用中，这里需要重新创建blob URL或从服务器获取
+                    if (data.url && data.url.startsWith('blob:')) {
+                        // blob URL已失效，跳过
+                        console.warn(`Blob URL for slide ${slideNumber} has expired`);
+                        return;
+                    }
+                    
+                    // 如果有有效的URL，创建媒体元素
+                    if (data.url && !data.url.startsWith('blob:')) {
+                        let element;
+                        if (data.type === 'video') {
+                            element = this.createVideoElement(data.url);
+                        } else {
+                            element = this.createImageElement(data.url);
+                        }
+                        
+                        this.mediaCache.set(parseInt(slideNumber), {
+                            type: data.type,
+                            element: element,
+                            url: data.url
+                        });
+                        
+                        console.log(`Loaded user media for slide ${slideNumber}`);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading user uploaded media:', error);
+        }
+    }
+
+    // 检查是否有用户上传的媒体文件
+    hasUserUploadedMedia() {
+        try {
+            const savedData = localStorage.getItem('slideshowMediaFiles');
+            return savedData && JSON.parse(savedData) && Object.keys(JSON.parse(savedData)).length > 0;
+        } catch {
+            return false;
+        }
+    }
+
+    // 获取用户上传的媒体文件信息（用于调试）
+    getUserUploadedMediaInfo() {
+        try {
+            const savedData = localStorage.getItem('slideshowMediaFiles');
+            if (savedData) {
+                const mediaData = JSON.parse(savedData);
+                return Object.keys(mediaData).map(slideNumber => ({
+                    slide: slideNumber,
+                    type: mediaData[slideNumber].type,
+                    fileName: mediaData[slideNumber].fileName || 'Unknown',
+                    timestamp: mediaData[slideNumber].timestamp
+                }));
+            }
+        } catch (error) {
+            console.error('Error getting user media info:', error);
+        }
+        return [];
     }
 }
 
