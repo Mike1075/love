@@ -100,3 +100,19 @@ public
 # Storybook build outputs
 .out
 .storybook-out
+# Media files (too large for Git)
+media/*.mp4
+media/*.webm
+media/*.ogg
+media/*.mov
+media/*.avi
+
+# Large image files (>5MB)
+media/*_large.png
+media/*_large.jpg
+media/*_large.webp
+
+# Keep placeholders and documentation
+!media/README.md
+!media/media-info.json
+!media/.gitkeep
