@@ -8,8 +8,8 @@ class MediaManager {
         this.init();
     }
 
-    init() {
-        this.preloadMedia();
+    async init() {
+        await this.preloadMedia();
         this.attachMediaToSlides();
     }
 
@@ -123,27 +123,47 @@ class MediaManager {
 
     // 将媒体附加到幻灯片
     attachMediaToSlides() {
-        const slides = document.querySelectorAll('.slide');
-        
-        slides.forEach((slide, index) => {
-            const slideNumber = index + 1;
-            const visual = slide.querySelector('.visual');
+        // 确保DOM已加载
+        const ensureAttachment = () => {
+            const slides = document.querySelectorAll('.slide');
             
-            if (visual && this.mediaCache.has(slideNumber)) {
-                const mediaData = this.mediaCache.get(slideNumber);
-                
-                // 清除现有内容
-                visual.innerHTML = '';
-                
-                // 添加媒体元素
-                visual.appendChild(mediaData.element);
-                
-                // 添加媒体类型标识
-                visual.classList.add(`media-${mediaData.type}`);
-                
-                console.log(`Attached ${mediaData.type} to slide ${slideNumber}`);
+            if (slides.length === 0) {
+                console.log('DOM elements not ready, waiting...');
+                setTimeout(ensureAttachment, 100);
+                return;
             }
-        });
+            
+            console.log(`Found ${slides.length} slides, attaching media...`);
+            
+            slides.forEach((slide, index) => {
+                const slideNumber = index + 1;
+                const visual = slide.querySelector('.visual');
+                
+                if (visual && this.mediaCache.has(slideNumber)) {
+                    const mediaData = this.mediaCache.get(slideNumber);
+                    
+                    // 清除现有内容
+                    visual.innerHTML = '';
+                    
+                    // 添加媒体元素
+                    visual.appendChild(mediaData.element);
+                    
+                    // 添加媒体类型标识
+                    visual.classList.add(`media-${mediaData.type}`);
+                    
+                    console.log(`✅ Attached ${mediaData.type} to slide ${slideNumber}`);
+                } else if (this.mediaCache.has(slideNumber)) {
+                    console.warn(`❌ Visual element not found for slide ${slideNumber}`);
+                }
+            });
+        };
+        
+        // 如果DOM已加载，立即执行，否则等待
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureAttachment);
+        } else {
+            ensureAttachment();
+        }
     }
 
     // 播放特定幻灯片的视频

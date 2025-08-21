@@ -21,14 +21,27 @@ class SlideshowSystem {
         this.startLoader();
         
         // 初始化媒体管理器
+        this.initMediaManager();
+        
+        // 自动隐藏控件
+        this.autoHideControls();
+        
+        // 预加载下一张幻灯片的资源
+        this.preloadNextSlide();
+    }
+
+    async initMediaManager() {
         if (window.MediaManager) {
+            console.log('🎬 初始化媒体管理器...');
             this.mediaManager = new MediaManager();
             
             // 监听localStorage变化，实时更新媒体
             window.addEventListener('storage', (e) => {
                 if (e.key === 'slideshowMediaFiles') {
                     console.log('🔄 检测到媒体文件更新，重新加载...');
-                    this.mediaManager.loadUserUploadedMedia();
+                    if (this.mediaManager) {
+                        this.mediaManager.loadUserUploadedMedia();
+                    }
                 }
             });
             
@@ -37,18 +50,27 @@ class SlideshowSystem {
                 if (this.mediaManager && this.mediaManager.hasUserUploadedMedia()) {
                     const currentTime = Date.now();
                     if (!this.lastMediaCheck || currentTime - this.lastMediaCheck > 5000) {
+                        console.log('🔄 定期检查媒体文件更新...');
                         this.mediaManager.loadUserUploadedMedia();
                         this.lastMediaCheck = currentTime;
                     }
                 }
             }, 3000);
+            
+            // 添加R键重新加载媒体功能
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'r' || e.key === 'R') {
+                    console.log('🔄 用户按下R键，强制重新加载媒体...');
+                    if (this.mediaManager) {
+                        this.mediaManager.loadUserUploadedMedia();
+                    }
+                }
+            });
+            
+            console.log('✅ 媒体管理器初始化完成');
+        } else {
+            console.warn('⚠️ MediaManager类未找到');
         }
-        
-        // 自动隐藏控件
-        this.autoHideControls();
-        
-        // 预加载下一张幻灯片的资源
-        this.preloadNextSlide();
     }
 
     startLoader() {

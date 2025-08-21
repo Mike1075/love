@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>媒体文件调试工具</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .debug-section {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .debug-title {
+            color: #00ffff;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffff00; }
+        .info { color: #00ffff; }
+        
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        button:hover {
+            background: #444;
+        }
+        
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-ok { background: #00ff00; }
+        .status-error { background: #ff0000; }
+        .status-warning { background: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>🔧 媒体文件调试工具</h1>
+    
+    <div class="debug-section">
+        <div class="debug-title">📊 系统状态检查</div>
+        <div id="systemStatus">正在检查...</div>
+        <button onclick="checkSystemStatus()">重新检查系统状态</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">💾 localStorage 内容分析</div>
+        <div id="localStorageStatus">正在分析...</div>
+        <button onclick="analyzeLocalStorage()">分析 localStorage</button>
+        <button onclick="clearLocalStorage()">清除 localStorage</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">🎬 MediaManager 状态</div>
+        <div id="mediaManagerStatus">正在检查...</div>
+        <button onclick="testMediaManager()">测试 MediaManager</button>
+        <button onclick="forceReloadMedia()">强制重载媒体</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">🎯 幻灯片元素检查</div>
+        <div id="slideElementsStatus">正在检查...</div>
+        <button onclick="checkSlideElements()">检查幻灯片元素</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">🧪 测试工具</div>
+        <input type="file" id="testFileInput" accept="image/*,video/*" style="margin: 10px 0;">
+        <br>
+        <button onclick="testFileUpload()">测试文件上传到slide 1</button>
+        <button onclick="simulateMediaFiles()">创建模拟媒体文件</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">📝 调试日志</div>
+        <div class="log" id="debugLog">调试日志将在这里显示...\n</div>
+        <button onclick="clearLog()">清除日志</button>
+        <button onclick="exportLog()">导出日志</button>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">🔗 快速链接</div>
+        <button onclick="window.open('index.html', '_blank')">打开主幻灯片</button>
+        <button onclick="window.open('media-manager.html', '_blank')">打开媒体管理</button>
+        <button onclick="location.reload()">刷新调试页面</button>
+    </div>
+
+    <script src="media-manager.js"></script>
+    <script>
+        // 调试日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('debugLog');
+            const colorMap = {
+                'info': '#00ffff',
+                'success': '#00ff00', 
+                'error': '#ff0000',
+                'warning': '#ffff00'
+            };
+            
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logElement.innerHTML += `<span style="color: ${colorMap[type]}">${logEntry}</span>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        // 系统状态检查
+        function checkSystemStatus() {
+            log('开始系统状态检查...', 'info');
+            const statusDiv = document.getElementById('systemStatus');
+            let statusHTML = '';
+            
+            // 检查关键对象和函数
+            const checks = [
+                { name: 'MediaManager类', test: () => typeof window.MediaManager !== 'undefined' },
+                { name: 'localStorage支持', test: () => typeof Storage !== 'undefined' },
+                { name: 'FileReader支持', test: () => typeof FileReader !== 'undefined' },
+                { name: 'URL.createObjectURL支持', test: () => typeof URL.createObjectURL !== 'undefined' },
+                { name: 'HTML5视频支持', test: () => !!document.createElement('video').canPlayType },
+                { name: 'Canvas支持', test: () => !!document.createElement('canvas').getContext }
+            ];
+            
+            checks.forEach(check => {
+                const result = check.test();
+                const status = result ? 'ok' : 'error';
+                const icon = result ? '✅' : '❌';
+                statusHTML += `<div><span class="status-indicator status-${status}"></span>${icon} ${check.name}: ${result ? '支持' : '不支持'}</div>`;
+                log(`${check.name}: ${result ? '支持' : '不支持'}`, result ? 'success' : 'error');
+            });
+            
+            statusDiv.innerHTML = statusHTML;
+        }
+
+        // localStorage 分析
+        function analyzeLocalStorage() {
+            log('分析localStorage内容...', 'info');
+            const statusDiv = document.getElementById('localStorageStatus');
+            
+            try {
+                const savedData = localStorage.getItem('slideshowMediaFiles');
+                if (!savedData) {
+                    statusDiv.innerHTML = '<span class="error">❌ 没有找到媒体文件数据</span>';
+                    log('localStorage中没有找到slideshowMediaFiles数据', 'error');
+                    return;
+                }
+                
+                const mediaData = JSON.parse(savedData);
+                const fileCount = Object.keys(mediaData).length;
+                
+                let analysisHTML = `<div class="success">✅ 找到 ${fileCount} 个媒体文件:</div>`;
+                
+                Object.entries(mediaData).forEach(([slideNumber, data]) => {
+                    const hasUrl = !!data.url;
+                    const isBase64 = data.url && data.url.startsWith('data:');
+                    const fileSize = data.fileSize ? `${Math.round(data.fileSize/1024)}KB` : '未知';
+                    
+                    analysisHTML += `
+                        <div style="margin-left: 20px; margin-top: 5px;">
+                            📄 第${slideNumber}张: ${data.slideName || '未知'}
+                            <br>&nbsp;&nbsp;&nbsp;类型: ${data.type || '未知'} | 大小: ${fileSize}
+                            <br>&nbsp;&nbsp;&nbsp;URL: ${hasUrl ? (isBase64 ? '✅ Base64数据' : '⚠️  Blob URL') : '❌ 无URL'}
+                            <br>&nbsp;&nbsp;&nbsp;时间: ${data.timestamp || '未知'}
+                        </div>
+                    `;
+                    
+                    log(`发现文件 - 第${slideNumber}张: ${data.type}, URL类型: ${isBase64 ? 'Base64' : hasUrl ? 'Blob' : '无'}`, hasUrl ? 'success' : 'error');
+                });
+                
+                statusDiv.innerHTML = analysisHTML;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="error">❌ 解析localStorage数据失败: ${error.message}</span>`;
+                log(`localStorage数据解析失败: ${error.message}`, 'error');
+            }
+        }
+
+        // MediaManager 测试
+        function testMediaManager() {
+            log('测试MediaManager...', 'info');
+            const statusDiv = document.getElementById('mediaManagerStatus');
+            
+            if (typeof window.MediaManager === 'undefined') {
+                statusDiv.innerHTML = '<span class="error">❌ MediaManager类未加载</span>';
+                log('MediaManager类未定义', 'error');
+                return;
+            }
+            
+            try {
+                // 创建MediaManager实例
+                const mediaManager = new MediaManager();
+                log('✅ MediaManager实例创建成功', 'success');
+                
+                // 检查媒体缓存
+                const cacheInfo = mediaManager.getMediaInfo ? mediaManager.getMediaInfo() : '方法不存在';
+                log(`媒体缓存信息: ${JSON.stringify(cacheInfo)}`, 'info');
+                
+                // 测试用户上传媒体加载
+                mediaManager.loadUserUploadedMedia();
+                
+                statusDiv.innerHTML = `
+                    <div class="success">✅ MediaManager工作正常</div>
+                    <div>缓存的媒体数量: ${mediaManager.mediaCache ? mediaManager.mediaCache.size : '未知'}</div>
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="error">❌ MediaManager测试失败: ${error.message}</span>`;
+                log(`MediaManager测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 检查幻灯片元素
+        function checkSlideElements() {
+            log('检查幻灯片DOM元素...', 'info');
+            const statusDiv = document.getElementById('slideElementsStatus');
+            
+            // 由于这是调试页面，我们需要检查主页面的元素
+            // 这里我们检查关键的选择器是否有效
+            const selectors = [
+                '.slide',
+                '.visual', 
+                '.slide-content',
+                '#slideshow',
+                '.slides'
+            ];
+            
+            let statusHTML = '<div class="info">📋 关键选择器检查 (需要在主页面中运行):</div>';
+            
+            selectors.forEach(selector => {
+                statusHTML += `<div style="margin-left: 20px;">🔍 ${selector}</div>`;
+            });
+            
+            statusHTML += '<div class="warning">⚠️  在主幻灯片页面按F12打开开发者工具查看详细信息</div>';
+            
+            statusDiv.innerHTML = statusHTML;
+            log('幻灯片元素检查完成 - 需要在主页面验证', 'info');
+        }
+
+        // 测试文件上传
+        function testFileUpload() {
+            const fileInput = document.getElementById('testFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('请先选择一个测试文件', 'warning');
+                return;
+            }
+            
+            log(`开始测试文件上传: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`, 'info');
+            
+            // 模拟媒体管理器的上传过程
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const mediaData = {
+                    1: {
+                        url: e.target.result,
+                        type: file.type.startsWith('video/') ? 'video' : 'image',
+                        slideNumber: 1,
+                        slideName: '爱，到底是什么？',
+                        timestamp: new Date().toLocaleString(),
+                        fileName: file.name,
+                        fileSize: file.size,
+                        mimeType: file.type
+                    }
+                };
+                
+                localStorage.setItem('slideshowMediaFiles', JSON.stringify(mediaData));
+                log('✅ 测试文件已保存到localStorage (第1张幻灯片)', 'success');
+                
+                // 重新分析localStorage
+                analyzeLocalStorage();
+            };
+            
+            reader.onerror = function() {
+                log('❌ 文件读取失败', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // 创建模拟媒体文件
+        function simulateMediaFiles() {
+            log('创建模拟媒体文件...', 'info');
+            
+            // 创建一个简单的1像素图片的base64数据
+            const simpleImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI/hRBQYwAAAABJRU5ErkJggg==';
+            
+            const simulatedData = {
+                1: {
+                    url: simpleImageBase64,
+                    type: 'image',
+                    slideNumber: 1,
+                    slideName: '爱，到底是什么？',
+                    timestamp: new Date().toLocaleString(),
+                    fileName: 'test1.png',
+                    fileSize: 1024,
+                    mimeType: 'image/png'
+                },
+                2: {
+                    url: simpleImageBase64,
+                    type: 'image', 
+                    slideNumber: 2,
+                    slideName: '你与你的身体，是朋友吗？',
+                    timestamp: new Date().toLocaleString(),
+                    fileName: 'test2.png',
+                    fileSize: 1024,
+                    mimeType: 'image/png'
+                }
+            };
+            
+            localStorage.setItem('slideshowMediaFiles', JSON.stringify(simulatedData));
+            log('✅ 已创建2个模拟媒体文件', 'success');
+            
+            // 重新分析
+            analyzeLocalStorage();
+        }
+
+        // 强制重载媒体
+        function forceReloadMedia() {
+            log('强制重载媒体文件...', 'info');
+            
+            if (typeof window.MediaManager === 'undefined') {
+                log('❌ MediaManager未加载，无法重载', 'error');
+                return;
+            }
+            
+            try {
+                const mediaManager = new MediaManager();
+                mediaManager.loadUserUploadedMedia();
+                log('✅ 媒体重载完成', 'success');
+            } catch (error) {
+                log(`❌ 媒体重载失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 清除localStorage
+        function clearLocalStorage() {
+            localStorage.removeItem('slideshowMediaFiles');
+            log('🗑️  已清除localStorage中的媒体文件', 'warning');
+            analyzeLocalStorage();
+        }
+
+        // 清除日志
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        // 导出日志
+        function exportLog() {
+            const logContent = document.getElementById('debugLog').textContent;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-log-${new Date().toISOString().slice(0,19)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载时自动运行检查
+        window.addEventListener('load', function() {
+            log('🚀 媒体调试工具加载完成', 'success');
+            checkSystemStatus();
+            analyzeLocalStorage();
+            
+            // 监听localStorage变化
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'slideshowMediaFiles') {
+                    log('🔄 检测到localStorage变化，重新分析...', 'info');
+                    analyzeLocalStorage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
