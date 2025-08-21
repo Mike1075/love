@@ -364,6 +364,16 @@
             try {
                 const mediaManager = new MediaManager();
                 mediaManager.loadUserUploadedMedia();
+                
+                // 延迟验证结果
+                setTimeout(() => {
+                    if (mediaManager.verifyMediaAttachment) {
+                        const result = mediaManager.verifyMediaAttachment();
+                        log(`📊 验证结果: ${result.attached}/${result.total} 个媒体文件成功附加`, 
+                            result.attached === result.total ? 'success' : 'warning');
+                    }
+                }, 1000);
+                
                 log('✅ 媒体重载完成', 'success');
             } catch (error) {
                 log(`❌ 媒体重载失败: ${error.message}`, 'error');

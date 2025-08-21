@@ -318,7 +318,15 @@ class MediaManager {
                 });
                 
                 // 强制重新附加媒体到幻灯片
-                this.attachMediaToSlides();
+                console.log(`🔄 强制重新附加 ${Object.keys(mediaData).length} 个媒体文件到幻灯片`);
+                setTimeout(() => {
+                    this.attachMediaToSlides();
+                    // 再次尝试确保附加成功
+                    setTimeout(() => {
+                        console.log('🔍 验证媒体附加结果...');
+                        this.verifyMediaAttachment();
+                    }, 500);
+                }, 100);
             } else {
                 console.log('No user uploaded media found in localStorage');
             }
@@ -354,6 +362,42 @@ class MediaManager {
             console.error('Error getting user media info:', error);
         }
         return [];
+    }
+
+    // 验证媒体附加结果
+    verifyMediaAttachment() {
+        console.log('🔍 开始验证媒体附加结果...');
+        const slides = document.querySelectorAll('.slide');
+        let attachedCount = 0;
+        let failedSlides = [];
+
+        this.mediaCache.forEach((mediaData, slideNumber) => {
+            const slide = slides[slideNumber - 1];
+            const visual = slide?.querySelector('.visual');
+            
+            if (visual && visual.children.length > 0) {
+                attachedCount++;
+                console.log(`✅ 第${slideNumber}张幻灯片媒体附加成功`);
+            } else {
+                failedSlides.push(slideNumber);
+                console.error(`❌ 第${slideNumber}张幻灯片媒体附加失败`);
+                
+                // 尝试重新附加失败的媒体
+                if (visual) {
+                    visual.innerHTML = '';
+                    visual.appendChild(mediaData.element);
+                    visual.classList.add(`media-${mediaData.type}`);
+                    console.log(`🔄 重新附加第${slideNumber}张幻灯片媒体`);
+                }
+            }
+        });
+
+        console.log(`📊 媒体附加结果: ${attachedCount}/${this.mediaCache.size} 成功`);
+        if (failedSlides.length > 0) {
+            console.warn(`⚠️ 失败的幻灯片: ${failedSlides.join(', ')}`);
+        }
+        
+        return { attached: attachedCount, failed: failedSlides, total: this.mediaCache.size };
     }
 }
 
