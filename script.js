@@ -23,6 +23,25 @@ class SlideshowSystem {
         // 初始化媒体管理器
         if (window.MediaManager) {
             this.mediaManager = new MediaManager();
+            
+            // 监听localStorage变化，实时更新媒体
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'slideshowMediaFiles') {
+                    console.log('🔄 检测到媒体文件更新，重新加载...');
+                    this.mediaManager.loadUserUploadedMedia();
+                }
+            });
+            
+            // 定期检查localStorage更新（同页面内的更新不会触发storage事件）
+            setInterval(() => {
+                if (this.mediaManager && this.mediaManager.hasUserUploadedMedia()) {
+                    const currentTime = Date.now();
+                    if (!this.lastMediaCheck || currentTime - this.lastMediaCheck > 5000) {
+                        this.mediaManager.loadUserUploadedMedia();
+                        this.lastMediaCheck = currentTime;
+                    }
+                }
+            }, 3000);
         }
         
         // 自动隐藏控件
@@ -106,6 +125,11 @@ class SlideshowSystem {
             case 'F11':
                 e.preventDefault();
                 this.toggleFullscreen();
+                break;
+            case 'r':
+            case 'R':
+                e.preventDefault();
+                this.reloadMedia();
                 break;
         }
     }
@@ -445,6 +469,32 @@ class SlideshowSystem {
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.setAttribute('tabindex', '0');
         });
+    }
+
+    // 重新加载媒体文件
+    reloadMedia() {
+        if (this.mediaManager) {
+            console.log('🔄 手动重新加载媒体文件...');
+            this.mediaManager.loadUserUploadedMedia();
+            
+            // 显示提示
+            const msg = document.createElement('div');
+            msg.textContent = '🔄 媒体文件已重新加载';
+            msg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(76, 175, 80, 0.9);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 25px;
+                z-index: 10000;
+                font-size: 16px;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
+        }
     }
 
     // 错误处理

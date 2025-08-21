@@ -268,37 +268,39 @@ class MediaManager {
             const savedData = localStorage.getItem('slideshowMediaFiles');
             if (savedData) {
                 const mediaData = JSON.parse(savedData);
-                console.log('Loading user uploaded media files...');
+                console.log('Loading user uploaded media files...', Object.keys(mediaData).length, 'files found');
                 
                 Object.keys(mediaData).forEach(slideNumber => {
                     const data = mediaData[slideNumber];
+                    console.log(`Processing slide ${slideNumber}:`, data);
                     
-                    // 注意：localStorage中的URL可能已失效
-                    // 在实际应用中，这里需要重新创建blob URL或从服务器获取
-                    if (data.url && data.url.startsWith('blob:')) {
-                        // blob URL已失效，跳过
-                        console.warn(`Blob URL for slide ${slideNumber} has expired`);
-                        return;
-                    }
-                    
-                    // 如果有有效的URL，创建媒体元素
-                    if (data.url && !data.url.startsWith('blob:')) {
+                    // 检查是否有有效的URL或Base64数据
+                    if (data.url) {
                         let element;
+                        const mediaUrl = data.url;
+                        
                         if (data.type === 'video') {
-                            element = this.createVideoElement(data.url);
+                            element = this.createVideoElement(mediaUrl);
                         } else {
-                            element = this.createImageElement(data.url);
+                            element = this.createImageElement(mediaUrl);
                         }
                         
                         this.mediaCache.set(parseInt(slideNumber), {
                             type: data.type,
                             element: element,
-                            url: data.url
+                            url: mediaUrl
                         });
                         
-                        console.log(`Loaded user media for slide ${slideNumber}`);
+                        console.log(`✅ Loaded user media for slide ${slideNumber} (${data.type})`);
+                    } else {
+                        console.warn(`❌ No valid URL for slide ${slideNumber}`);
                     }
                 });
+                
+                // 强制重新附加媒体到幻灯片
+                this.attachMediaToSlides();
+            } else {
+                console.log('No user uploaded media found in localStorage');
             }
         } catch (error) {
             console.error('Error loading user uploaded media:', error);

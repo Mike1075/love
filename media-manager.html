@@ -569,18 +569,28 @@
 
             addMediaFile(file, slideNumber) {
                 const url = URL.createObjectURL(file);
-                const mediaData = {
-                    file: file,
-                    url: url,
-                    type: file.type.startsWith('video/') ? 'video' : 'image',
-                    slideNumber: slideNumber,
-                    slideName: this.slideNames[slideNumber],
-                    timestamp: new Date().toLocaleString()
-                };
+                
+                // 将文件转换为Base64以便持久保存
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const mediaData = {
+                        file: file,
+                        url: url, // 临时URL用于当前页面
+                        base64: e.target.result, // Base64数据用于持久保存
+                        type: file.type.startsWith('video/') ? 'video' : 'image',
+                        slideNumber: slideNumber,
+                        slideName: this.slideNames[slideNumber],
+                        timestamp: new Date().toLocaleString(),
+                        fileName: file.name,
+                        fileSize: file.size,
+                        mimeType: file.type
+                    };
 
-                this.mediaFiles.set(slideNumber, mediaData);
-                this.updateMediaGrid();
-                this.saveToLocalStorage();
+                    this.mediaFiles.set(slideNumber, mediaData);
+                    this.updateMediaGrid();
+                    this.saveToLocalStorage();
+                };
+                reader.readAsDataURL(file);
             }
 
             updateMediaGrid() {
@@ -676,15 +686,18 @@
                 const mediaData = {};
                 this.mediaFiles.forEach((data, slideNumber) => {
                     mediaData[slideNumber] = {
-                        url: data.url,
+                        url: data.base64 || data.url, // 优先使用base64，fallback到url
                         type: data.type,
                         slideNumber: data.slideNumber,
                         slideName: data.slideName,
                         timestamp: data.timestamp,
-                        fileName: data.file.name
+                        fileName: data.fileName,
+                        fileSize: data.fileSize,
+                        mimeType: data.mimeType
                     };
                 });
                 localStorage.setItem('slideshowMediaFiles', JSON.stringify(mediaData));
+                console.log('💾 保存了', Object.keys(mediaData).length, '个媒体文件到localStorage');
             }
 
             loadExistingMedia() {
