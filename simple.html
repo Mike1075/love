@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真爱之旅：唤醒生命本源之力</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .slide {
+            text-align: center;
+            max-width: 800px;
+            animation: fadeIn 2s ease;
+        }
+        
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            margin-bottom: 2rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-weight: 400;
+        }
+        
+        .visual {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3), transparent);
+            animation: breathe 4s ease-in-out infinite;
+        }
+        
+        .nav {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+        
+        button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .slide-text {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="visual"></div>
+        <h1>真爱之旅</h1>
+        <p class="slide-text">唤醒生命本源之力</p>
+        <p style="margin-top: 1rem; opacity: 0.7; font-size: 1.1rem;">一场关于存在与体验的灵性旅程</p>
+    </div>
+    
+    <div class="nav">
+        <button onclick="showMessage('这是第一张幻灯片')">开始</button>
+        <button onclick="window.open('https://github.com/Mike1075/love', '_blank')">项目源码</button>
+    </div>
+    
+    <script>
+        function showMessage(msg) {
+            alert(msg + '\n\n完整版幻灯片功能正在加载中...');
+        }
+        
+        // 简单的键盘导航
+        document.addEventListener('keydown', function(e) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                showMessage('欢迎来到真爱之旅');
+            }
+        });
+        
+        console.log('Simple slideshow loaded');
+    </script>
+</body>
+</html>

@@ -89,6 +89,8 @@ html, body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    opacity: 0;
+    transition: opacity 1s ease;
 }
 
 /* 动态粒子背景 */

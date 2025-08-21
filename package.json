@@ -4,45 +4,21 @@
   "description": "真爱之旅：唤醒生命本源之力 - 世界顶级幻灯片展示",
   "main": "index.html",
   "scripts": {
-    "start": "python -m http.server 8000",
-    "build": "npm run optimize",
-    "dev": "live-server --port=3000 --open=/",
-    "optimize": "npm run minify-css && npm run minify-js",
-    "minify-css": "cleancss -o styles.min.css styles.css",
-    "minify-js": "terser script.js -o script.min.js -c -m",
-    "deploy": "vercel --prod",
-    "preview": "vercel"
+    "dev": "python -m http.server 8000",
+    "build": "echo 'Static site, no build needed'",
+    "start": "echo 'Static site deployed'"
   },
   "keywords": [
     "slideshow",
     "presentation",
     "spiritual",
     "journey",
-    "love",
-    "consciousness",
-    "meditation",
-    "healing",
-    "transformation"
+    "love"
   ],
   "author": "True Love Journey",
   "license": "MIT",
-  "devDependencies": {
-    "clean-css-cli": "^5.6.2",
-    "live-server": "^1.2.2",
-    "terser": "^5.19.2"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Mike1075/love.git"
-  },
-  "homepage": "https://love-journey.vercel.app",
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+  }
 }

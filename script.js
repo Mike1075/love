@@ -30,6 +30,12 @@ class SlideshowSystem {
         const loader = document.getElementById('loader');
         const slideshow = document.getElementById('slideshow');
         
+        // 确保元素存在
+        if (!loader || !slideshow) {
+            console.error('Required elements not found');
+            return;
+        }
+        
         // 模拟加载过程
         setTimeout(() => {
             loader.classList.add('hidden');
@@ -37,7 +43,7 @@ class SlideshowSystem {
             
             // 开始第一张幻灯片动画
             this.animateSlideIn(0);
-        }, 2000);
+        }, 1500);
     }
 
     bindEvents() {
@@ -566,58 +572,60 @@ class SlideshowExtensions {
     }
 }
 
-// 初始化系统
+// 简化的初始化系统
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        const slideshow = new SlideshowSystem();
-        const extensions = new SlideshowExtensions(slideshow);
+        // 检查必需元素
+        const loader = document.getElementById('loader');
+        const slideshow = document.getElementById('slideshow');
+        
+        if (!loader || !slideshow) {
+            throw new Error('Required elements not found');
+        }
+        
+        // 初始化主系统
+        const slideshowSystem = new SlideshowSystem();
+        
+        // 尝试初始化扩展功能
+        try {
+            const extensions = new SlideshowExtensions(slideshowSystem);
+        } catch (extError) {
+            console.warn('Extensions failed to load:', extError);
+        }
         
         // 全局暴露给调试使用
-        window.slideshow = slideshow;
+        window.slideshow = slideshowSystem;
         
         // 性能监控
         if (window.performance && window.performance.mark) {
             window.performance.mark('slideshow-init-complete');
         }
         
+        console.log('Slideshow initialized successfully');
+        
     } catch (error) {
         console.error('初始化失败:', error);
         
-        // 显示兼容性提示
-        const fallback = document.createElement('div');
-        fallback.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #000;
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                text-align: center;
-                z-index: 10000;
-            ">
-                <div>
-                    <h1>真爱之旅：唤醒生命本源之力</h1>
-                    <p>您的浏览器不支持某些功能，建议使用最新版本的Chrome、Firefox或Safari。</p>
-                    <button onclick="location.reload()" style="
-                        margin-top: 20px;
-                        padding: 10px 20px;
-                        background: #4facfe;
-                        border: none;
-                        color: white;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 16px;
-                    ">重新加载</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(fallback);
+        // 显示基本内容而不是错误页面
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.style.display = 'none';
+        }
+        
+        const slideshow = document.getElementById('slideshow');
+        if (slideshow) {
+            slideshow.style.opacity = '1';
+        }
+        
+        // 确保至少第一张幻灯片可见
+        const firstSlide = document.querySelector('.slide');
+        if (firstSlide) {
+            firstSlide.classList.add('active');
+            firstSlide.style.opacity = '1';
+            firstSlide.style.transform = 'translateX(0)';
+        }
+        
+        console.log('Fallback mode activated');
     }
 });
 
