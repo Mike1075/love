@@ -9,6 +9,7 @@ class SlideshowSystem {
         this.touchEndX = 0;
         this.particles = [];
         this.isAnimating = false;
+        this.mediaManager = null;
         
         this.init();
     }
@@ -18,6 +19,11 @@ class SlideshowSystem {
         this.createParticles();
         this.updateUI();
         this.startLoader();
+        
+        // 初始化媒体管理器
+        if (window.MediaManager) {
+            this.mediaManager = new MediaManager();
+        }
         
         // 自动隐藏控件
         this.autoHideControls();
@@ -187,36 +193,35 @@ class SlideshowSystem {
         const fromSlide = slides[fromIndex];
         const toSlide = slides[toIndex];
         
-        // 移除所有活动状态
-        slides.forEach(slide => {
-            slide.classList.remove('active', 'prev');
+        if (!fromSlide || !toSlide) {
+            this.isAnimating = false;
+            return;
+        }
+        
+        // 移除所有状态类
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active', 'prev', 'next');
+            if (index === toIndex) {
+                slide.classList.add('active');
+            } else if (index < toIndex) {
+                slide.classList.add('prev');
+            } else {
+                slide.classList.add('next');
+            }
         });
         
-        // 设置动画方向
-        const direction = toIndex > fromIndex ? 1 : -1;
-        
-        // 准备新幻灯片
-        toSlide.style.transform = `translateX(${direction * 100}px)`;
-        toSlide.style.opacity = '0';
-        
-        // 开始动画
-        requestAnimationFrame(() => {
-            // 旧幻灯片退出
-            fromSlide.style.transform = `translateX(${-direction * 100}px)`;
-            fromSlide.style.opacity = '0';
+        // 使用更平滑的动画完成回调
+        setTimeout(() => {
+            this.animateSlideIn(toIndex);
             
-            // 新幻灯片进入
-            toSlide.classList.add('active');
-            toSlide.style.transform = 'translateX(0)';
-            toSlide.style.opacity = '1';
+            // 播放当前幻灯片的视频
+            if (this.mediaManager) {
+                this.mediaManager.pauseAllVideos();
+                this.mediaManager.playSlideVideo(toIndex + 1);
+            }
             
-            // 动画完成处理
-            setTimeout(() => {
-                fromSlide.classList.add('prev');
-                this.animateSlideIn(toIndex);
-                this.isAnimating = false;
-            }, 800);
-        });
+            this.isAnimating = false;
+        }, 600);
     }
 
     animateSlideIn(index) {

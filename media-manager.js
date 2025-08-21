@@ -1,0 +1,261 @@
+// 媒体文件管理系统
+class MediaManager {
+    constructor() {
+        this.mediaCache = new Map();
+        this.supportedVideoFormats = ['mp4', 'webm', 'ogg'];
+        this.supportedImageFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        this.mediaBasePath = './media/';
+        this.init();
+    }
+
+    init() {
+        this.preloadMedia();
+        this.attachMediaToSlides();
+    }
+
+    // 预加载媒体文件
+    async preloadMedia() {
+        const totalSlides = 32;
+        const loadPromises = [];
+
+        for (let i = 1; i <= totalSlides; i++) {
+            loadPromises.push(this.loadMediaForSlide(i));
+        }
+
+        try {
+            await Promise.allSettled(loadPromises);
+            console.log('Media preloading completed');
+        } catch (error) {
+            console.warn('Some media files failed to load:', error);
+        }
+    }
+
+    // 为特定幻灯片加载媒体
+    async loadMediaForSlide(slideNumber) {
+        // 首先尝试加载视频
+        for (const format of this.supportedVideoFormats) {
+            const videoUrl = `${this.mediaBasePath}${slideNumber}.${format}`;
+            if (await this.checkFileExists(videoUrl)) {
+                const videoElement = this.createVideoElement(videoUrl);
+                this.mediaCache.set(slideNumber, {
+                    type: 'video',
+                    element: videoElement,
+                    url: videoUrl
+                });
+                return;
+            }
+        }
+
+        // 如果没有视频，尝试加载图片
+        for (const format of this.supportedImageFormats) {
+            const imageUrl = `${this.mediaBasePath}${slideNumber}.${format}`;
+            if (await this.checkFileExists(imageUrl)) {
+                const imageElement = this.createImageElement(imageUrl);
+                this.mediaCache.set(slideNumber, {
+                    type: 'image',
+                    element: imageElement,
+                    url: imageUrl
+                });
+                return;
+            }
+        }
+
+        // 如果都没有找到，使用默认CSS视觉效果
+        console.log(`No media found for slide ${slideNumber}, using default CSS visual`);
+    }
+
+    // 检查文件是否存在
+    async checkFileExists(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // 创建视频元素
+    createVideoElement(url) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+        video.style.borderRadius = '50%';
+        
+        // 预加载视频
+        video.preload = 'metadata';
+        
+        // 错误处理
+        video.addEventListener('error', (e) => {
+            console.error(`Video loading error for ${url}:`, e);
+        });
+
+        return video;
+    }
+
+    // 创建图片元素
+    createImageElement(url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '50%';
+        
+        // 错误处理
+        img.addEventListener('error', (e) => {
+            console.error(`Image loading error for ${url}:`, e);
+        });
+
+        return img;
+    }
+
+    // 将媒体附加到幻灯片
+    attachMediaToSlides() {
+        const slides = document.querySelectorAll('.slide');
+        
+        slides.forEach((slide, index) => {
+            const slideNumber = index + 1;
+            const visual = slide.querySelector('.visual');
+            
+            if (visual && this.mediaCache.has(slideNumber)) {
+                const mediaData = this.mediaCache.get(slideNumber);
+                
+                // 清除现有内容
+                visual.innerHTML = '';
+                
+                // 添加媒体元素
+                visual.appendChild(mediaData.element);
+                
+                // 添加媒体类型标识
+                visual.classList.add(`media-${mediaData.type}`);
+                
+                console.log(`Attached ${mediaData.type} to slide ${slideNumber}`);
+            }
+        });
+    }
+
+    // 播放特定幻灯片的视频
+    playSlideVideo(slideNumber) {
+        const mediaData = this.mediaCache.get(slideNumber);
+        
+        if (mediaData && mediaData.type === 'video') {
+            const video = mediaData.element;
+            video.currentTime = 0;
+            video.play().catch(error => {
+                console.warn(`Could not play video for slide ${slideNumber}:`, error);
+            });
+        }
+    }
+
+    // 暂停所有视频
+    pauseAllVideos() {
+        this.mediaCache.forEach((mediaData, slideNumber) => {
+            if (mediaData.type === 'video') {
+                mediaData.element.pause();
+            }
+        });
+    }
+
+    // 获取媒体文件信息
+    getMediaInfo() {
+        const info = [];
+        this.mediaCache.forEach((mediaData, slideNumber) => {
+            info.push({
+                slide: slideNumber,
+                type: mediaData.type,
+                url: mediaData.url
+            });
+        });
+        return info;
+    }
+
+    // 动态添加媒体文件
+    async addMediaFile(slideNumber, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('slideNumber', slideNumber);
+
+        try {
+            // 这里可以添加上传到服务器的逻辑
+            // const response = await fetch('/api/upload-media', {
+            //     method: 'POST',
+            //     body: formData
+            // });
+
+            // 临时解决方案：创建本地URL
+            const localUrl = URL.createObjectURL(file);
+            const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+            
+            let element;
+            if (fileType === 'video') {
+                element = this.createVideoElement(localUrl);
+            } else {
+                element = this.createImageElement(localUrl);
+            }
+
+            this.mediaCache.set(slideNumber, {
+                type: fileType,
+                element: element,
+                url: localUrl
+            });
+
+            // 更新对应的幻灯片
+            this.updateSlideMedia(slideNumber);
+            
+            console.log(`Added ${fileType} for slide ${slideNumber}`);
+            
+        } catch (error) {
+            console.error('Error adding media file:', error);
+        }
+    }
+
+    // 更新特定幻灯片的媒体
+    updateSlideMedia(slideNumber) {
+        const slide = document.querySelectorAll('.slide')[slideNumber - 1];
+        const visual = slide?.querySelector('.visual');
+        
+        if (visual && this.mediaCache.has(slideNumber)) {
+            const mediaData = this.mediaCache.get(slideNumber);
+            
+            // 清除现有内容
+            visual.innerHTML = '';
+            
+            // 添加新媒体元素
+            visual.appendChild(mediaData.element);
+            visual.classList.add(`media-${mediaData.type}`);
+        }
+    }
+
+    // 移除媒体文件
+    removeMedia(slideNumber) {
+        if (this.mediaCache.has(slideNumber)) {
+            const mediaData = this.mediaCache.get(slideNumber);
+            
+            // 释放资源
+            if (mediaData.url.startsWith('blob:')) {
+                URL.revokeObjectURL(mediaData.url);
+            }
+            
+            this.mediaCache.delete(slideNumber);
+            
+            // 恢复默认视觉效果
+            const slide = document.querySelectorAll('.slide')[slideNumber - 1];
+            const visual = slide?.querySelector('.visual');
+            if (visual) {
+                visual.innerHTML = '';
+                visual.classList.remove('media-video', 'media-image');
+            }
+            
+            console.log(`Removed media for slide ${slideNumber}`);
+        }
+    }
+}
+
+// 将MediaManager添加到全局作用域
+window.MediaManager = MediaManager;
