@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "python -m http.server 8000",
-    "build": "echo 'Static site, no build needed'",
+    "build": "mkdir -p public && cp *.html *.css *.js public/",
     "start": "echo 'Static site deployed'"
   },
   "keywords": [
